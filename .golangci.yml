@@ -11,6 +11,9 @@ linters:
     - errcheck
     - gosec
     - stylecheck
+formatters:
+  enable:
+    - gofmt
     - goimports
 issues:
   exclude-use-default: false
