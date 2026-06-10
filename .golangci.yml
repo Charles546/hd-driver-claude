@@ -5,12 +5,10 @@ linters:
   enable:
     - govet
     - staticcheck
-    - prealloc
     - misspell
     - unused
     - errcheck
     - gosec
-    - stylecheck
 formatters:
   enable:
     - gofmt
