@@ -200,3 +200,53 @@ func TestContentBlockTypes(t *testing.T) {
 	assert.NotNil(t, toolBlock.ToolUse)
 	assert.Equal(t, "search", toolBlock.ToolUse.Name)
 }
+
+func TestBuildClaudeRequestWithThinkingBudget(t *testing.T) {
+	cfg := engineConfig{
+		Model:          "claude-3-opus-20240229",
+		ThinkingBudget: 2000,
+	}
+
+	history := []agentpkg.Message{
+		{
+			Role:    agentpkg.RoleUser,
+			Content: "Test with thinking",
+		},
+	}
+
+	req := buildClaudeRequest(cfg, history, nil, nil)
+
+	assert.NotNil(t, req.Thinking)
+	assert.Equal(t, "enabled", req.Thinking.Type)
+	assert.Equal(t, 2000, req.Thinking.BudgetTokens)
+	assert.Equal(t, 3024, req.MaxTokens) // 2000 + 1024
+}
+
+func TestHandleIncomingMessageWithThinking(t *testing.T) {
+	msg := &claudeResponse{
+		StopReason: "end_turn",
+		Content: []contentBlock{
+			{Type: "thinking", Thinking: "Let me think about this..."},
+			{Type: "text", Text: "Here's my answer."},
+		},
+	}
+
+	assert.Equal(t, "end_turn", msg.StopReason)
+	assert.Len(t, msg.Content, 2)
+	assert.Equal(t, "thinking", msg.Content[0].Type)
+	assert.Equal(t, "Let me think about this...", msg.Content[0].Thinking)
+	assert.Equal(t, "text", msg.Content[1].Type)
+	assert.Equal(t, "Here's my answer.", msg.Content[1].Text)
+}
+
+func TestContentBlockThinking(t *testing.T) {
+	block := contentBlock{
+		Type:      "thinking",
+		Thinking:  "This is my reasoning process",
+		Signature: "signature123",
+	}
+
+	assert.Equal(t, "thinking", block.Type)
+	assert.Equal(t, "This is my reasoning process", block.Thinking)
+	assert.Equal(t, "signature123", block.Signature)
+}

@@ -104,3 +104,49 @@ message:
 ## License
 
 This project is dual-licensed. By default it is licensed under the GNU Affero General Public License v3.0. If you have a separate written commercial agreement, you may use it under those terms instead.
+
+## Extended Thinking Support
+
+Claude 3.5+ models support "extended thinking" which shows the model's reasoning process. This driver supports thinking through:
+
+### Configuration
+
+Enable thinking by setting `thinking_budget_tokens` in your engine configuration:
+
+```yaml
+drivers:
+  claude:
+    data:
+      engines:
+        claude3_5_sonnet:
+          model: claude-3-5-sonnet-20241022
+          api_key: ${ANTHROPIC_API_KEY}
+          thinking_budget_tokens: 2000  # Enable extended thinking
+```
+
+When `thinking_budget_tokens` is set:
+- The `thinking` field is added to API requests
+- The driver automatically sets `max_tokens` to `thinking_budget_tokens + 1024`
+- Thinking content is extracted from responses and populated in `Message.Thoughts`
+- `Message.IsThinking` is set to `true` when thinking content is present
+
+### How it works
+
+1. When the API returns content blocks with `type: "thinking"`, the driver:
+   - Sets `Message.IsThinking = true`
+   - Appends the thinking text to `Message.Thoughts`
+   
+2. The thinking content is sent to the agent bus along with the final response
+
+3. Token usage is tracked separately for input and output tokens
+
+### Example
+
+```yaml
+agents:
+  thoughtful-agent:
+    driver: claude
+    engine: claude3_5_sonnet
+    model_data:
+      temperature: 0.7
+```

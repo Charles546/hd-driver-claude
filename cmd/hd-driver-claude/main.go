@@ -29,6 +29,7 @@ type engineConfig struct {
 	APIKey           string `mapstructure:"api_key"`
 	BaseURL          string `mapstructure:"base_url"`
 	AnthropicVersion string `mapstructure:"anthropic_version"`
+	ThinkingBudget   int    `mapstructure:"thinking_budget_tokens"`
 }
 
 type claudeMessage struct {
@@ -38,6 +39,8 @@ type claudeMessage struct {
 
 type contentBlock struct {
 	Type      string        `json:"type"`
+	Thinking  string        `json:"thinking,omitempty"`
+	Signature string        `json:"signature,omitempty"`
 	Text      string        `json:"text,omitempty"`
 	ToolUseID string        `json:"tool_use_id,omitempty"`
 	Input     interface{}   `json:"input,omitempty"`
@@ -56,6 +59,11 @@ type claudeTool struct {
 	InputSchema interface{} `json:"input_schema"`
 }
 
+type thinkingConfig struct {
+	Type         string `json:"type"`
+	BudgetTokens int    `json:"budget_tokens"`
+}
+
 type claudeRequest struct {
 	Model       string          `json:"model"`
 	Messages    []claudeMessage `json:"messages"`
@@ -64,6 +72,7 @@ type claudeRequest struct {
 	MaxTokens   int             `json:"max_tokens,omitempty"`
 	Temperature float64         `json:"temperature,omitempty"`
 	Stream      bool            `json:"stream,omitempty"`
+	Thinking    *thinkingConfig `json:"thinking,omitempty"`
 }
 
 type claudeResponse struct {
@@ -300,6 +309,14 @@ func buildClaudeRequest(cfg engineConfig, history []agentpkg.Message, tools map[
 
 	if req.MaxTokens == 0 {
 		req.MaxTokens = 4096
+
+		if cfg.ThinkingBudget > 0 {
+			req.Thinking = &thinkingConfig{
+				Type:         "enabled",
+				BudgetTokens: cfg.ThinkingBudget,
+			}
+			req.MaxTokens = cfg.ThinkingBudget + 1024
+		}
 	}
 
 	return req
@@ -366,6 +383,10 @@ func handleIncomingMessage(msg *claudeResponse, sessionID string) {
 
 	for _, block := range msg.Content {
 		switch block.Type {
+		case "thinking":
+			agentMsg.IsThinking = true
+			agentMsg.Thoughts += block.Thinking + "\n"
+
 		case "text":
 			agentMsg.Content += block.Text
 		case "tool_use":
