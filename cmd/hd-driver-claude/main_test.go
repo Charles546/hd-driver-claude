@@ -64,8 +64,8 @@ func TestBuildClaudeRequestWithToolCalls(t *testing.T) {
 			Content: "Search for Go tutorials",
 		},
 		{
-			Role:      agentpkg.RoleAgent,
-			Content:   "I'll search for that",
+			Role:    agentpkg.RoleAgent,
+			Content: "I'll search for that",
 			ToolCalls: []agentpkg.ToolCall{
 				{
 					FuncName: "search",
@@ -105,7 +105,7 @@ func TestBuildClaudeRequestWithModelData(t *testing.T) {
 
 	payload := map[string]interface{}{
 		"model_data": map[string]interface{}{
-			"max_tokens": 2048,
+			"max_tokens":  2048,
 			"temperature": 0.5,
 		},
 	}
@@ -131,7 +131,7 @@ func TestAgentbusMessage(t *testing.T) {
 	assert.Equal(t, sessionID, msg.Labels["agent_session_id"])
 	assert.Equal(t, sessionID, msg.Labels["sequence"])
 	assert.NotNil(t, msg.Payload)
-	
+
 	messageData, ok := msg.Payload.(map[string]interface{})
 	assert.True(t, ok)
 	assert.NotNil(t, messageData["message"])
@@ -139,9 +139,9 @@ func TestAgentbusMessage(t *testing.T) {
 
 func TestClaudeResponseParsing(t *testing.T) {
 	tests := []struct {
-		name      string
+		name       string
 		stopReason string
-		expected  bool
+		expected   bool
 	}{
 		{"end_turn", "end_turn", true},
 		{"stop_sequence", "stop_sequence", true},
@@ -191,8 +191,8 @@ func TestContentBlockTypes(t *testing.T) {
 	toolBlock := contentBlock{
 		Type: "tool_use",
 		ToolUse: &toolUseBlock{
-			ID:   "toolu_123",
-			Name: "search",
+			ID:    "toolu_123",
+			Name:  "search",
 			Input: map[string]interface{}{"query": "test"},
 		},
 	}

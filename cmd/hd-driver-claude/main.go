@@ -16,10 +16,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	agentpkg "github.com/honeydipper/honeydipper/v4/pkg/agent"
 	"github.com/honeydipper/honeydipper/v4/pkg/dipper"
 	"github.com/mitchellh/mapstructure"
-	"github.com/google/uuid"
 )
 
 var driver *dipper.Driver
@@ -45,8 +45,8 @@ type contentBlock struct {
 }
 
 type toolUseBlock struct {
-	ID   string      `json:"id"`
-	Name string      `json:"name"`
+	ID    string      `json:"id"`
+	Name  string      `json:"name"`
 	Input interface{} `json:"input"`
 }
 
@@ -325,7 +325,7 @@ func callClaudeAPI(ctx context.Context, cfg engineConfig, req claudeRequest) (*c
 	if err != nil {
 		return nil, fmt.Errorf("failed to call Claude API: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -333,7 +333,7 @@ func callClaudeAPI(ctx context.Context, cfg engineConfig, req claudeRequest) (*c
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("Claude API error: status %d, body: %s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("claude API error: status %d, body: %s", resp.StatusCode, string(body))
 	}
 
 	var claudeResp claudeResponse
